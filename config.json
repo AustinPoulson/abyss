@@ -2,14 +2,37 @@
   "version": 1,
   "background": {
     "colors": [
-      "#090014",
-      "#2d006b",
-      "#8a00ff",
-      "#ff00c8",
-      "#00e5ff"
+      "#12002f",
+      "#ff006e",
+      "#fb5607",
+      "#ffbe0b",
+      "#8338ec",
+      "#3a86ff"
     ],
     "division": "1/4",
-    "effect": "sparkle"
+    "effect": "sparkle",
+    "effectSettings": {
+      "strobe": {
+        "randomness": 0
+      },
+      "fade": {
+        "duration": 100
+      },
+      "sparkle": {
+        "minSize": 54,
+        "maxSize": 400,
+        "quantity": 8,
+        "diffusion": 100,
+        "intensity": 10,
+        "rayWidth": 20,
+        "fadeIn": 100
+      },
+      "slime": {
+        "speed": 200,
+        "dripDepth": 240,
+        "complexity": 10
+      }
+    }
   },
   "tempo": 120,
   "palette": "ember",

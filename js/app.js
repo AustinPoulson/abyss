@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const defaults = { version: 1, background: { colors: ["#07090c"], division: "1/4", effect: "strobe" }, tempo: 120, palette: "ice", density: 42, motion: 34, glow: 58 };
+  const defaults = { version: 1, background: { colors: ["#07090c"], division: "1/4", effect: "solid", effectSettings: { strobe: { randomness: 0 }, fade: { duration: 100 }, sparkle: { minSize: 48, maxSize: 600, quantity: 1, diffusion: 60, intensity: 78, rayWidth: 20, fadeIn: 35 }, slime: { speed: 100, dripDepth: 130, complexity: 7 } } }, tempo: 120, palette: "ice", density: 42, motion: 34, glow: 58 };
   const beats = { "1/1": 4, "1/2": 2, "1/4": 1, "1/8": .5, "1/16": .25, "1/4T": 2 / 3, "1/8T": 1 / 3, "1/16T": 1 / 6 };
   const presets = [
     ["Blacklight", ["#090014", "#2d006b", "#8a00ff", "#ff00c8", "#00e5ff"]], ["Laser Red", ["#050505", "#3b0008", "#b00020", "#ff1744", "#ff6d00"]], ["UV Pulse", ["#10002b", "#3c096c", "#7b2cbf", "#c77dff", "#f72585"]], ["Acid Rave", ["#061400", "#2bff00", "#b6ff00", "#eeff00", "#00ff85"]], ["Blue Laser", ["#000814", "#001d3d", "#003566", "#00b4d8", "#90e0ef"]],
@@ -16,6 +16,8 @@
     const next = Object.assign({}, defaults, loaded);
     if (typeof next.background === "string") next.background = { colors: [next.background], division: "1/4", effect: "strobe" };
     next.background = Object.assign({}, defaults.background, next.background);
+    next.background.effectSettings = Object.assign({}, clone(defaults.background.effectSettings), next.background.effectSettings);
+    Object.keys(defaults.background.effectSettings).forEach((effect) => { next.background.effectSettings[effect] = Object.assign({}, defaults.background.effectSettings[effect], next.background.effectSettings[effect]); });
     next.background.colors = Array.isArray(next.background.colors) && next.background.colors.length ? next.background.colors : [defaults.background.colors[0]];
     return next;
   }
@@ -38,6 +40,7 @@
     const effectsContext = effectsCanvas ? effectsCanvas.getContext("2d") : null;
     const sparkles = [];
     const slimeSheets = [];
+    let sparkleFadeFrame = 0;
     let viewportWidth = window.innerWidth;
     let viewportHeight = window.innerHeight;
     function resizeEffects() {
@@ -53,22 +56,29 @@
     function drawEffects() {
       if (!effectsContext) return;
       effectsContext.clearRect(0, 0, viewportWidth, viewportHeight);
+      const sparkleSettings = settings.background.effectSettings.sparkle;
+      const fadeDuration = (60000 / settings.tempo) * beats[settings.background.division] * (sparkleSettings.fadeIn / 100);
+      const drawTime = performance.now();
       sparkles.forEach((sparkle) => {
         effectsContext.save();
+        effectsContext.globalAlpha = fadeDuration ? Math.min(1, (drawTime - sparkle.born) / fadeDuration) : 1;
         effectsContext.translate(sparkle.x, sparkle.y);
         effectsContext.rotate(sparkle.rotation);
         const color = hexToRgb(sparkle.color);
+        const diffusion = sparkleSettings.diffusion / 100;
+        const intensity = sparkleSettings.intensity / 100;
+        const rayWidth = sparkleSettings.rayWidth / 100;
         const ray = effectsContext.createRadialGradient(0, 0, 0, 0, 0, sparkle.size);
-        ray.addColorStop(0, `rgba(${color.join(",")},.78)`);
-        ray.addColorStop(.26, `rgba(${color.join(",")},.45)`);
+        ray.addColorStop(0, `rgba(${color.join(",")},${intensity * (1 - diffusion * .3)})`);
+        ray.addColorStop(.12 + diffusion * .6, `rgba(${color.join(",")},${intensity * (.65 - diffusion * .2)})`);
         ray.addColorStop(1, `rgba(${color.join(",")},0)`);
         effectsContext.fillStyle = ray;
         effectsContext.save();
-        effectsContext.scale(.2, 1);
+        effectsContext.scale(rayWidth, 1);
         effectsContext.beginPath(); effectsContext.arc(0, 0, sparkle.size, 0, Math.PI * 2); effectsContext.fill();
         effectsContext.restore();
         effectsContext.save();
-        effectsContext.rotate(Math.PI / 2); effectsContext.scale(.2, 1);
+        effectsContext.rotate(Math.PI / 2); effectsContext.scale(rayWidth, 1);
         effectsContext.beginPath(); effectsContext.arc(0, 0, sparkle.size, 0, Math.PI * 2); effectsContext.fill();
         effectsContext.restore();
         effectsContext.restore();
@@ -82,23 +92,33 @@
       });
     }
     function hexToRgb(hex) { return hex.match(/[\da-f]{2}/gi).map((value) => parseInt(value, 16)); }
-    function spawnSparkle(color) {
-      sparkles.push({ color, x: Math.random() * viewportWidth, y: Math.random() * viewportHeight, size: 48 + Math.random() * 208, rotation: Math.random() * Math.PI * 2 });
+    function animateSparkleFade() {
+      sparkleFadeFrame = 0;
       drawEffects();
+      const sparkleSettings = settings.background.effectSettings.sparkle;
+      const fadeDuration = (60000 / settings.tempo) * beats[settings.background.division] * (sparkleSettings.fadeIn / 100);
+      const now = performance.now();
+      if (fadeDuration && sparkles.some((sparkle) => now - sparkle.born < fadeDuration)) sparkleFadeFrame = requestAnimationFrame(animateSparkleFade);
+    }
+    function spawnSparkle(color) {
+      const sparkleSettings = settings.background.effectSettings.sparkle; const minSize = Math.min(sparkleSettings.minSize, sparkleSettings.maxSize); const maxSize = Math.max(sparkleSettings.minSize, sparkleSettings.maxSize);
+      sparkles.push({ color, x: Math.random() * viewportWidth, y: Math.random() * viewportHeight, size: minSize + Math.random() * (maxSize - minSize), rotation: Math.random() * Math.PI * 2, born: performance.now() });
+      if (sparkleSettings.fadeIn && !sparkleFadeFrame) sparkleFadeFrame = requestAnimationFrame(animateSparkleFade); else if (!sparkleSettings.fadeIn) drawEffects();
     }
     function spawnSlime(color) {
-      const waves = Array.from({ length: 5 + Math.floor(Math.random() * 5) }, () => ({ x: Math.random() * viewportWidth, width: 24 + Math.random() * 90, length: 30 + Math.random() * 130 }));
-      const sheet = { color, front: -240, speed: 70 + Math.random() * 90, phase: Math.random() * 10, waves, edge(x) { let y = this.front + Math.sin(x / 150 + this.phase) * 22 + Math.sin(x / 78 + this.phase * 1.7) * 9; this.waves.forEach((wave) => { const distance = Math.abs(x - wave.x); if (distance < wave.width) y += wave.length * Math.pow(1 - distance / wave.width, 2); }); return y; } };
+      const slimeSettings = settings.background.effectSettings.slime; const waves = Array.from({ length: slimeSettings.complexity }, () => ({ x: Math.random() * viewportWidth, width: 24 + Math.random() * 90, length: 30 + Math.random() * slimeSettings.dripDepth }));
+      const speedScale = slimeSettings.speed / 100; const sheet = { color, front: -(slimeSettings.dripDepth + 110), speed: (70 + Math.random() * 90) * speedScale, phase: Math.random() * 10, waves, edge(x) { let y = this.front + Math.sin(x / 150 + this.phase) * 22 + Math.sin(x / 78 + this.phase * 1.7) * 9; this.waves.forEach((wave) => { const distance = Math.abs(x - wave.x); if (distance < wave.width) y += wave.length * Math.pow(1 - distance / wave.width, 2); }); return y; } };
       slimeSheets.push(sheet);
     }
     resizeEffects();
     window.addEventListener("resize", resizeEffects);
+    if (settings.background.effect === "solid") { document.body.style.backgroundColor = settings.background.colors[0]; return; }
     if (settings.background.effect === "sparkle" && !reduced) {
       document.body.style.backgroundColor = settings.background.colors[0];
       const scheduleSparkle = () => {
         const colors = settings.background.colors;
         index = (index + 1) % colors.length;
-        spawnSparkle(colors[index]);
+        for (let count = 0; count < settings.background.effectSettings.sparkle.quantity; count += 1) spawnSparkle(colors[index]);
         const interval = (60000 / settings.tempo) * beats[settings.background.division];
         window.setTimeout(scheduleSparkle, Math.max(16, interval));
       };
@@ -124,8 +144,8 @@
       const colors = settings.background.colors;
       const interval = (60000 / settings.tempo) * beats[settings.background.division];
       let progress = interval ? (now - lastStep) / interval : 1;
-      if (!reduced && colors.length > 1 && progress >= 1) { index = (index + Math.floor(progress)) % colors.length; lastStep = now; progress = 0; }
-      if (!reduced && colors.length > 1 && settings.background.effect === "fade") document.body.style.backgroundColor = blend(colors[index], colors[(index + 1) % colors.length], Math.min(1, progress));
+      if (!reduced && colors.length > 1 && progress >= 1) { const steps = Math.floor(progress); for (let step = 0; step < steps; step += 1) index = settings.background.effect === "strobe" && Math.random() * 100 < settings.background.effectSettings.strobe.randomness ? Math.floor(Math.random() * colors.length) : (index + 1) % colors.length; lastStep = now; progress = 0; }
+      if (!reduced && colors.length > 1 && settings.background.effect === "fade") { const fadeSpan = settings.background.effectSettings.fade.duration / 100; document.body.style.backgroundColor = blend(colors[index], colors[(index + 1) % colors.length], Math.min(1, progress / fadeSpan)); }
       else document.body.style.backgroundColor = colors[index % colors.length];
       requestAnimationFrame(frame);
     }
@@ -145,8 +165,16 @@
     const tempo = document.getElementById("tempo");
     const tempoValue = document.getElementById("tempo-value");
     const divisions = document.querySelectorAll("[data-division]");
-    let effects = document.querySelectorAll("[data-effect]");
-    if (effects.length && !document.querySelector("[data-effect='slime']")) { const button = document.createElement("button"); button.type = "button"; button.className = "division-button"; button.dataset.effect = "slime"; button.textContent = "Slime"; effects[0].parentNode.append(button); effects = document.querySelectorAll("[data-effect]"); }
+    const effects = document.querySelectorAll("[data-effect]");
+    const divisionGrid = document.querySelector(".division-grid"); const divisionHint = divisionGrid?.nextElementSibling;
+    const effectSettingsHost = document.createElement("div"); effectSettingsHost.className = "effect-settings"; divisionHint?.after(effectSettingsHost);
+    const effectControlSpecs = { strobe: [["randomness", "Random order", 0, 100, "%"]], fade: [["duration", "Fade span", 10, 100, "%"]], sparkle: [["minSize", "Minimum size", 24, 240, "px"], ["maxSize", "Maximum size", 80, 1200, "px"], ["quantity", "Stars per beat", 1, 8, ""], ["diffusion", "Diffusion", 0, 100, "%"], ["intensity", "Intensity", 10, 100, "%"], ["rayWidth", "Ray width", 8, 45, "%"], ["fadeIn", "Fade in", 0, 100, "%"]], slime: [["speed", "Pour speed", 40, 200, "%"], ["dripDepth", "Drip depth", 40, 240, "px"], ["complexity", "Shape complexity", 3, 12, ""]] };
+    function renderEffectSettings() {
+      const effect = settings.background.effect; const isSolid = effect === "solid";
+      if (divisionGrid) divisionGrid.hidden = isSolid; if (divisionHint) divisionHint.hidden = isSolid;
+      effectSettingsHost.innerHTML = isSolid ? '<p class="hint">Solid uses the first background color and does not run on division.</p>' : `<div class="control-label">${effect.charAt(0).toUpperCase() + effect.slice(1)} controls</div>`;
+      (effectControlSpecs[effect] || []).forEach(([key, label, min, max, suffix]) => { const row = document.createElement("div"); row.className = "control-row effect-control"; const value = settings.background.effectSettings[effect][key]; row.innerHTML = `<label class="control-label" for="effect-${effect}-${key}">${label}</label><input id="effect-${effect}-${key}" type="range" min="${min}" max="${max}" value="${value}"><output class="control-value">${value}${suffix}</output>`; const input = row.querySelector("input"); const output = row.querySelector("output"); input.addEventListener("input", () => { settings.background.effectSettings[effect][key] = Number(input.value); if (effect === "sparkle" && key === "minSize" && settings.background.effectSettings.sparkle.maxSize < Number(input.value)) settings.background.effectSettings.sparkle.maxSize = Number(input.value); if (effect === "sparkle" && key === "maxSize" && settings.background.effectSettings.sparkle.minSize > Number(input.value)) settings.background.effectSettings.sparkle.minSize = Number(input.value); output.textContent = `${input.value}${suffix}`; saveSettings(); }); effectSettingsHost.append(row); });
+    }
     const renderColors = () => {
       if (!colorList) return;
       colorList.innerHTML = "";
@@ -164,7 +192,8 @@
     document.getElementById("add-color")?.addEventListener("click", () => { settings.background.colors.push("#07090c"); renderColors(); saveSettings(); });
     if (tempo && tempoValue) { tempo.value = settings.tempo; tempoValue.textContent = `${tempo.value} BPM`; tempo.addEventListener("input", () => { settings.tempo = Number(tempo.value); tempoValue.textContent = `${tempo.value} BPM`; saveSettings(); }); }
     divisions.forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.division === settings.background.division)); button.addEventListener("click", () => { settings.background.division = button.dataset.division; divisions.forEach((item) => item.setAttribute("aria-pressed", String(item === button))); saveSettings(); }); });
-    effects.forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.effect === settings.background.effect)); button.addEventListener("click", () => { settings.background.effect = button.dataset.effect; effects.forEach((item) => item.setAttribute("aria-pressed", String(item === button))); saveSettings(); }); });
+    effects.forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.effect === settings.background.effect)); button.addEventListener("click", () => { settings.background.effect = button.dataset.effect; effects.forEach((item) => item.setAttribute("aria-pressed", String(item === button))); renderEffectSettings(); saveSettings(); }); });
+    renderEffectSettings();
     document.getElementById("reset")?.addEventListener("click", () => { settings = clone(defaults); saveSettings(); location.reload(); });
   }
 })();
