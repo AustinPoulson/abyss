@@ -18,7 +18,9 @@ function send(response, status, body, contentType = "text/plain; charset=utf-8")
 
 function validConfig(config) {
   const ranges = ["density", "motion", "glow"];
-  return config && config.version === 1 && ["ice", "ember", "moss", "violet"].includes(config.palette) && ranges.every((key) => Number.isInteger(config[key]) && config[key] >= 0 && config[key] <= 100);
+  const divisions = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/4T", "1/8T", "1/16T"];
+  const background = config?.background;
+  return config && config.version === 1 && background && Array.isArray(background.colors) && background.colors.length > 0 && background.colors.every((color) => /^#[\da-f]{6}$/i.test(color)) && divisions.includes(background.division) && ["strobe", "fade", "sparkle", "slime"].includes(background.effect) && Number.isInteger(config.tempo) && config.tempo >= 40 && config.tempo <= 240 && ["ice", "ember", "moss", "violet"].includes(config.palette) && ranges.every((key) => Number.isInteger(config[key]) && config[key] >= 0 && config[key] <= 100);
 }
 
 function removePidFile() {
