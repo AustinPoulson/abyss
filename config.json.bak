@@ -25,7 +25,7 @@
         "diffusion": 100,
         "intensity": 10,
         "rayWidth": 20,
-        "fadeIn": 35
+        "fadeIn": 100
       },
       "slime": {
         "speed": 200,
@@ -33,6 +33,23 @@
         "complexity": 10
       }
     }
+  },
+  "fractal": {
+    "enabled": true,
+    "style": "ink",
+    "symmetry": 16,
+    "recursion": 3,
+    "rotation": 0,
+    "pulse": 0,
+    "distortion": 100,
+    "centerX": 50,
+    "centerY": 50,
+    "opacity": 72,
+    "blend": "lighter",
+    "trail": 0,
+    "crossfade": 100,
+    "division": "1/1",
+    "colorMode": "palette"
   },
   "tempo": 120,
   "palette": "ember",

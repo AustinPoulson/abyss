@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const defaults = { version: 1, background: { colors: ["#07090c"], division: "1/4", effect: "solid", effectSettings: { strobe: { randomness: 0 }, fade: { duration: 100 }, sparkle: { minSize: 48, maxSize: 600, quantity: 1, diffusion: 60, intensity: 78, rayWidth: 20, fadeIn: 35 }, slime: { speed: 100, dripDepth: 130, complexity: 7 } } }, tempo: 120, palette: "ice", density: 42, motion: 34, glow: 58 };
+  const defaults = { version: 1, background: { colors: ["#07090c"], division: "1/4", effect: "solid", effectSettings: { strobe: { randomness: 0 }, fade: { duration: 100 }, sparkle: { minSize: 48, maxSize: 600, quantity: 1, diffusion: 60, intensity: 78, rayWidth: 20, fadeIn: 35 }, slime: { speed: 100, dripDepth: 130, complexity: 7 } } }, fractal: { enabled: true, style: "ink", symmetry: 8, recursion: 3, rotation: 18, pulse: 38, distortion: 55, centerX: 50, centerY: 50, opacity: 72, blend: "screen", trail: 18, crossfade: 35, division: "1/4", colorMode: "palette" }, tempo: 120, palette: "ice", density: 42, motion: 34, glow: 58 };
   const beats = { "1/1": 4, "1/2": 2, "1/4": 1, "1/8": .5, "1/16": .25, "1/4T": 2 / 3, "1/8T": 1 / 3, "1/16T": 1 / 6 };
   const presets = [
     ["Blacklight", ["#090014", "#2d006b", "#8a00ff", "#ff00c8", "#00e5ff"]], ["Laser Red", ["#050505", "#3b0008", "#b00020", "#ff1744", "#ff6d00"]], ["UV Pulse", ["#10002b", "#3c096c", "#7b2cbf", "#c77dff", "#f72585"]], ["Acid Rave", ["#061400", "#2bff00", "#b6ff00", "#eeff00", "#00ff85"]], ["Blue Laser", ["#000814", "#001d3d", "#003566", "#00b4d8", "#90e0ef"]],
@@ -19,6 +19,7 @@
     next.background.effectSettings = Object.assign({}, clone(defaults.background.effectSettings), next.background.effectSettings);
     Object.keys(defaults.background.effectSettings).forEach((effect) => { next.background.effectSettings[effect] = Object.assign({}, defaults.background.effectSettings[effect], next.background.effectSettings[effect]); });
     next.background.colors = Array.isArray(next.background.colors) && next.background.colors.length ? next.background.colors : [defaults.background.colors[0]];
+    next.fractal = Object.assign({}, defaults.fractal, next.fractal);
     return next;
   }
   async function loadSettings() {
@@ -29,7 +30,7 @@
 
   loadSettings().then((loaded) => {
     settings = loaded;
-    if (document.body.classList.contains("art-page")) startStrobe();
+    if (document.body.classList.contains("art-page")) { startStrobe(); startFractalLayer(); }
     if (document.querySelector(".controls-page")) initControls();
   });
 
@@ -152,6 +153,12 @@
     requestAnimationFrame(frame);
   }
 
+  function startFractalLayer() {
+    const canvas = document.getElementById("fractal-canvas");
+    if (!canvas || !window.AbyssFractal) return;
+    window.AbyssFractal.start(canvas, Object.assign({}, settings.fractal, { colors: settings.background.colors, tempo: settings.tempo }));
+  }
+
   function blend(from, to, amount) {
     const a = from.match(/[\da-f]{2}/gi).map((value) => parseInt(value, 16));
     const b = to.match(/[\da-f]{2}/gi).map((value) => parseInt(value, 16));
@@ -175,6 +182,11 @@
       effectSettingsHost.innerHTML = isSolid ? '<p class="hint">Solid uses the first background color and does not run on division.</p>' : `<div class="control-label">${effect.charAt(0).toUpperCase() + effect.slice(1)} controls</div>`;
       (effectControlSpecs[effect] || []).forEach(([key, label, min, max, suffix]) => { const row = document.createElement("div"); row.className = "control-row effect-control"; const value = settings.background.effectSettings[effect][key]; row.innerHTML = `<label class="control-label" for="effect-${effect}-${key}">${label}</label><input id="effect-${effect}-${key}" type="range" min="${min}" max="${max}" value="${value}"><output class="control-value">${value}${suffix}</output>`; const input = row.querySelector("input"); const output = row.querySelector("output"); input.addEventListener("input", () => { settings.background.effectSettings[effect][key] = Number(input.value); if (effect === "sparkle" && key === "minSize" && settings.background.effectSettings.sparkle.maxSize < Number(input.value)) settings.background.effectSettings.sparkle.maxSize = Number(input.value); if (effect === "sparkle" && key === "maxSize" && settings.background.effectSettings.sparkle.minSize > Number(input.value)) settings.background.effectSettings.sparkle.minSize = Number(input.value); output.textContent = `${input.value}${suffix}`; saveSettings(); }); effectSettingsHost.append(row); });
     }
+    function syncFractalControls() {
+      document.querySelectorAll("[data-fractal-choice]").forEach((button) => { const key = button.dataset.fractalChoice; const current = key === "enabled" ? String(settings.fractal[key]) : settings.fractal[key]; button.setAttribute("aria-pressed", String(button.dataset.value === current)); });
+      document.querySelectorAll("[data-fractal-division]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.fractalDivision === settings.fractal.division)));
+      document.querySelectorAll("[data-fractal-range]").forEach((input) => { input.value = settings.fractal[input.dataset.fractalRange]; input.nextElementSibling.textContent = `${input.value}${input.dataset.suffix || ""}`; });
+    }
     const renderColors = () => {
       if (!colorList) return;
       colorList.innerHTML = "";
@@ -193,7 +205,11 @@
     if (tempo && tempoValue) { tempo.value = settings.tempo; tempoValue.textContent = `${tempo.value} BPM`; tempo.addEventListener("input", () => { settings.tempo = Number(tempo.value); tempoValue.textContent = `${tempo.value} BPM`; saveSettings(); }); }
     divisions.forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.division === settings.background.division)); button.addEventListener("click", () => { settings.background.division = button.dataset.division; divisions.forEach((item) => item.setAttribute("aria-pressed", String(item === button))); saveSettings(); }); });
     effects.forEach((button) => { button.setAttribute("aria-pressed", String(button.dataset.effect === settings.background.effect)); button.addEventListener("click", () => { settings.background.effect = button.dataset.effect; effects.forEach((item) => item.setAttribute("aria-pressed", String(item === button))); renderEffectSettings(); saveSettings(); }); });
+    document.querySelectorAll("[data-fractal-choice]").forEach((button) => button.addEventListener("click", () => { const key = button.dataset.fractalChoice; settings.fractal[key] = key === "enabled" ? button.dataset.value === "true" : button.dataset.value; syncFractalControls(); saveSettings(); }));
+    document.querySelectorAll("[data-fractal-division]").forEach((button) => button.addEventListener("click", () => { settings.fractal.division = button.dataset.fractalDivision; syncFractalControls(); saveSettings(); }));
+    document.querySelectorAll("[data-fractal-range]").forEach((input) => input.addEventListener("input", () => { settings.fractal[input.dataset.fractalRange] = Number(input.value); input.nextElementSibling.textContent = `${input.value}${input.dataset.suffix || ""}`; saveSettings(); }));
     renderEffectSettings();
+    syncFractalControls();
     document.getElementById("reset")?.addEventListener("click", () => { settings = clone(defaults); saveSettings(); location.reload(); });
   }
 })();

@@ -29,6 +29,7 @@ button, input { font: inherit; }
 
 #artwork { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; }
 #effects-canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
+#fractal-canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
 
 .grain {
   position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.075;
@@ -37,7 +38,7 @@ button, input { font: inherit; }
 }
 
 .topbar, .art-meta, .art-index { position: absolute; left: var(--space); right: var(--space); }
-.topbar { top: var(--space); display: flex; justify-content: space-between; align-items: flex-start; }
+.topbar { top: var(--space); z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; }
 .wordmark { font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase; text-decoration: none; }
 .eyebrow { margin: 0; color: var(--muted); font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; }
 .control-link { color: var(--ink); text-decoration: none; font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; border-bottom: 1px solid var(--line); padding-bottom: 0.35rem; }
@@ -76,6 +77,9 @@ input[type="color"] { width: 4.2rem; height: 2.7rem; padding: .25rem; border: 1p
 .effect-grid { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 .effect-settings { border-top: 1px solid var(--line); margin-top: 1.5rem; padding-top: 1.25rem; }
 .effect-control { margin-top: 1rem; }
+.fractal-label { margin-top: 1.5rem; }
+.fractal-ranges { border-top: 1px solid var(--line); margin-top: 1.5rem; padding-top: .25rem; }
+.fractal-ranges .control-row { grid-template-columns: 10rem 1fr 4.5rem; }
 [hidden] { display: none !important; }
 .division-button { min-width: 3.25rem; border: 1px solid var(--line); background: transparent; color: var(--muted); padding: .65rem .75rem; cursor: pointer; font-size: .75rem; }
 .division-button[aria-pressed="true"], .division-button:hover, .division-button:focus-visible { border-color: var(--accent); color: var(--accent); }

@@ -34,6 +34,23 @@
       }
     }
   },
+  "fractal": {
+    "enabled": true,
+    "style": "shards",
+    "symmetry": 16,
+    "recursion": 3,
+    "rotation": 0,
+    "pulse": 0,
+    "distortion": 100,
+    "centerX": 50,
+    "centerY": 50,
+    "opacity": 72,
+    "blend": "lighter",
+    "trail": 0,
+    "crossfade": 100,
+    "division": "1/1",
+    "colorMode": "palette"
+  },
   "tempo": 120,
   "palette": "ember",
   "density": 42,
