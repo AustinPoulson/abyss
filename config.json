@@ -45,7 +45,7 @@
     "centerX": 50,
     "centerY": 50,
     "opacity": 72,
-    "blend": "lighter",
+    "blend": "multiply",
     "trail": 0,
     "crossfade": 100,
     "division": "1/1",
