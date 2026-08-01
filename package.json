@@ -1,0 +1,9 @@
+{
+  "name": "abyss",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "controls": "node tools/control-server.mjs",
+    "controls:stop": "node tools/stop-controls.mjs"
+  }
+}

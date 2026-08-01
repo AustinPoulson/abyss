@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e12">
+  <title>Controls — abyss</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="controls-page">
+  <main class="controls-shell">
+    <header class="controls-header">
+      <div><a class="wordmark" href="index.html">abyss</a><h1 class="controls-title">Controls</h1><p class="controls-intro">Tune the field. This is a private browser preview; changes are kept on this device and do not update the shared artwork configuration.</p></div>
+      <a class="back-link" href="index.html">View work ↗</a>
+    </header>
+    <section class="control-group" aria-labelledby="palette-label"><div class="control-label" id="palette-label">Palette</div><div class="swatches"><button class="swatch" data-palette="ice" style="background:linear-gradient(135deg,#071019,#d4e8ee)" aria-label="Ice palette"></button><button class="swatch" data-palette="ember" style="background:linear-gradient(135deg,#160b0b,#f4c69e)" aria-label="Ember palette"></button><button class="swatch" data-palette="moss" style="background:linear-gradient(135deg,#08120e,#c4d9ae)" aria-label="Moss palette"></button><button class="swatch" data-palette="violet" style="background:linear-gradient(135deg,#100b1a,#e3d7ff)" aria-label="Violet palette"></button></div><p class="hint">Choose a temperature for the light.</p></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="density">Density</label><input id="density" type="range" min="0" max="100"><output class="control-value" id="density-value"></output></div><p class="hint">The number of points moving through the field.</p></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="motion">Motion</label><input id="motion" type="range" min="0" max="100"><output class="control-value" id="motion-value"></output></div><p class="hint">The pace of the drift. Set to zero for a still image.</p></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="glow">Glow</label><input id="glow" type="range" min="0" max="100"><output class="control-value" id="glow-value"></output></div><p class="hint">The radius and intensity of each point of light.</p></section>
+    <button class="reset" id="reset" type="button">Reset preview</button>
+  </main>
+  <script src="js/app.js"></script>
+</body>
+</html>

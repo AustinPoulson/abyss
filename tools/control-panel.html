@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local controls — abyss</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="controls-page local-controls-page">
+  <main class="controls-shell">
+    <header class="controls-header">
+      <div><a class="wordmark" href="/">abyss</a><h1 class="controls-title">Local<br>controls</h1><p class="controls-intro">This panel edits the project’s <code>config.json</code> directly. Changes are shared by every visitor after the site is deployed.</p></div>
+      <a class="back-link" href="/index.html">View work ↗</a>
+    </header>
+    <p class="save-status" id="status" role="status">Loading config…</p>
+    <section class="control-group" aria-labelledby="palette-label"><div class="control-label" id="palette-label">Palette</div><div class="swatches"><button class="swatch" data-palette="ice" style="background:linear-gradient(135deg,#071019,#d4e8ee)" aria-label="Ice palette"></button><button class="swatch" data-palette="ember" style="background:linear-gradient(135deg,#160b0b,#f4c69e)" aria-label="Ember palette"></button><button class="swatch" data-palette="moss" style="background:linear-gradient(135deg,#08120e,#c4d9ae)" aria-label="Moss palette"></button><button class="swatch" data-palette="violet" style="background:linear-gradient(135deg,#100b1a,#e3d7ff)" aria-label="Violet palette"></button></div></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="density">Density</label><input id="density" type="range" min="0" max="100"><output class="control-value" id="density-value"></output></div><p class="hint">The number of points moving through the field.</p></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="motion">Motion</label><input id="motion" type="range" min="0" max="100"><output class="control-value" id="motion-value"></output></div><p class="hint">The pace of the drift.</p></section>
+    <section class="control-group"><div class="control-row"><label class="control-label" for="glow">Glow</label><input id="glow" type="range" min="0" max="100"><output class="control-value" id="glow-value"></output></div><p class="hint">The radius and intensity of each point of light.</p></section>
+    <div class="local-actions"><button class="reset" id="save" type="button">Save to config.json</button><button class="reset" id="reload" type="button">Reload file</button></div>
+  </main>
+  <script>
+    const settings = { version: 1, palette: "ice", density: 42, motion: 34, glow: 58 };
+    const status = document.getElementById("status");
+    const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = error; };
+    const syncControls = () => {
+      ["density", "motion", "glow"].forEach((key) => { const input = document.getElementById(key); input.value = settings[key]; document.getElementById(`${key}-value`).textContent = settings[key]; });
+      document.querySelectorAll(".swatch").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.palette === settings.palette)));
+    };
+    async function loadConfig() { const response = await fetch("/api/config"); if (!response.ok) throw new Error("Could not read config.json."); Object.assign(settings, await response.json()); syncControls(); setStatus("Loaded from config.json"); }
+    ["density", "motion", "glow"].forEach((key) => document.getElementById(key).addEventListener("input", (event) => { settings[key] = Number(event.target.value); document.getElementById(`${key}-value`).textContent = settings[key]; }));
+    document.querySelectorAll(".swatch").forEach((button) => button.addEventListener("click", () => { settings.palette = button.dataset.palette; syncControls(); }));
+    document.getElementById("save").addEventListener("click", async () => { const response = await fetch("/api/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings) }); if (!response.ok) return setStatus(await response.text(), true); setStatus("Saved to config.json"); });
+    document.getElementById("reload").addEventListener("click", () => loadConfig().catch((error) => setStatus(error.message, true)));
+    loadConfig().catch((error) => setStatus(error.message, true));
+  </script>
+</body>
+</html>
