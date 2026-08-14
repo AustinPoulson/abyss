@@ -10,7 +10,7 @@
       "#3a86ff"
     ],
     "division": "1/4",
-    "effect": "solid",
+    "effect": "sparkle",
     "effectSettings": {
       "strobe": {
         "randomness": 0

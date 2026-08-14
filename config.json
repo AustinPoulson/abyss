@@ -36,7 +36,7 @@
   },
   "fractal": {
     "enabled": true,
-    "style": "shards",
+    "style": "spray",
     "symmetry": 16,
     "recursion": 2,
     "rotation": 1,

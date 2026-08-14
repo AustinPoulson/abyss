@@ -40,11 +40,21 @@
     <div class="local-actions"><button class="reset" id="save" type="button">Save to config.json</button><button class="reset" id="reload" type="button">Reload file</button></div>
   </main>
   <script type="module">
-    import { BACKGROUND_EFFECT_CONTROL_SPECS, cloneSettings, COLOR_PRESETS, DEFAULTS, normalizeSettings } from "/js/config-model.js";
+    import { cloneSettings, DEFAULTS, normalizeSettings } from "/js/config-model.js";
+    import { initControls } from "/js/controls-ui.js";
 
     const settings = cloneSettings(DEFAULTS);
     const status = document.getElementById("status");
-    const presets = COLOR_PRESETS;
+    const { syncControls } = initControls({ settings });
+    const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = error; };
+    async function loadConfig() {
+      const response = await fetch("/api/config");
+      if (!response.ok) throw new Error("Could not read config.json.");
+      Object.assign(settings, normalizeSettings(await response.json()));
+      syncControls();
+      setStatus("Loaded from config.json");
+    }
+    /* Legacy inline controls moved to /js/controls-ui.js.
     const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = error; };
     const divisionGrid = document.querySelector(".division-grid"); const divisionHint = divisionGrid?.nextElementSibling; const effectSettingsHost = document.createElement("div"); effectSettingsHost.className = "effect-settings"; divisionHint?.after(effectSettingsHost);
     const effectControlSpecs = BACKGROUND_EFFECT_CONTROL_SPECS;
@@ -72,6 +82,7 @@
     document.querySelectorAll("[data-fractal-choice]").forEach((button) => button.addEventListener("click", () => { const key = button.dataset.fractalChoice; settings.fractal[key] = key === "enabled" ? button.dataset.value === "true" : button.dataset.value; syncFractalControls(); }));
     document.querySelectorAll("[data-fractal-division]").forEach((button) => button.addEventListener("click", () => { settings.fractal.division = button.dataset.fractalDivision; syncFractalControls(); }));
     document.querySelectorAll("[data-fractal-range]").forEach((input) => input.addEventListener("input", () => { settings.fractal[input.dataset.fractalRange] = Number(input.value); input.nextElementSibling.textContent = `${input.value}${input.dataset.suffix || ""}`; }));
+    */
     document.getElementById("save").addEventListener("click", async () => { const response = await fetch("/api/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings) }); if (!response.ok) return setStatus(await response.text(), true); setStatus("Saved to config.json"); });
     document.getElementById("reload").addEventListener("click", () => loadConfig().catch((error) => setStatus(error.message, true)));
     loadConfig().catch((error) => setStatus(error.message, true));
