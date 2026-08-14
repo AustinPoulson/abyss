@@ -4,6 +4,7 @@ import { unlinkSync } from "node:fs";
 import { readFile, writeFile, copyFile } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateConfig } from "../js/config-model.js";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const configPath = join(root, "config.json");
@@ -14,18 +15,6 @@ const types = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": 
 function send(response, status, body, contentType = "text/plain; charset=utf-8") {
   response.writeHead(status, { "Content-Type": contentType, "Cache-Control": "no-store" });
   response.end(body);
-}
-
-function validConfig(config) {
-  const ranges = ["density", "motion", "glow"];
-  const divisions = ["1/1", "1/2", "1/4", "1/8", "1/16", "1/4T", "1/8T", "1/16T"];
-  const background = config?.background;
-  const effects = background?.effectSettings;
-  const optionalInteger = (value, min, max) => value === undefined || (Number.isInteger(value) && value >= min && value <= max);
-  const validEffects = effects && Number.isInteger(effects.strobe?.randomness) && effects.strobe.randomness >= 0 && effects.strobe.randomness <= 100 && Number.isInteger(effects.fade?.duration) && effects.fade.duration >= 10 && effects.fade.duration <= 100 && Number.isInteger(effects.sparkle?.minSize) && effects.sparkle.minSize >= 24 && effects.sparkle.minSize <= 240 && Number.isInteger(effects.sparkle?.maxSize) && effects.sparkle.maxSize >= 80 && effects.sparkle.maxSize <= 1200 && effects.sparkle.maxSize >= effects.sparkle.minSize && Number.isInteger(effects.sparkle?.quantity) && effects.sparkle.quantity >= 1 && effects.sparkle.quantity <= 8 && optionalInteger(effects.sparkle?.diffusion, 0, 100) && optionalInteger(effects.sparkle?.intensity, 10, 100) && optionalInteger(effects.sparkle?.rayWidth, 8, 45) && optionalInteger(effects.sparkle?.fadeIn, 0, 100) && Number.isInteger(effects.slime?.speed) && effects.slime.speed >= 40 && effects.slime.speed <= 200 && Number.isInteger(effects.slime?.dripDepth) && effects.slime.dripDepth >= 40 && effects.slime.dripDepth <= 240 && Number.isInteger(effects.slime?.complexity) && effects.slime.complexity >= 3 && effects.slime.complexity <= 12;
-  const fractal = config?.fractal;
-  const validFractal = fractal === undefined || (typeof fractal.enabled === "boolean" && ["ink", "shards", "spray", "liquid"].includes(fractal.style) && Number.isInteger(fractal.symmetry) && fractal.symmetry >= 3 && fractal.symmetry <= 16 && Number.isInteger(fractal.recursion) && fractal.recursion >= 1 && fractal.recursion <= 5 && Number.isInteger(fractal.rotation) && fractal.rotation >= -100 && fractal.rotation <= 100 && Number.isInteger(fractal.pulse) && fractal.pulse >= 0 && fractal.pulse <= 100 && Number.isInteger(fractal.distortion) && fractal.distortion >= 0 && fractal.distortion <= 100 && Number.isInteger(fractal.centerX) && fractal.centerX >= 0 && fractal.centerX <= 100 && Number.isInteger(fractal.centerY) && fractal.centerY >= 0 && fractal.centerY <= 100 && Number.isInteger(fractal.opacity) && fractal.opacity >= 0 && fractal.opacity <= 100 && ["normal", "screen", "lighter", "multiply", "difference"].includes(fractal.blend) && Number.isInteger(fractal.trail) && fractal.trail >= 0 && fractal.trail <= 95 && optionalInteger(fractal.crossfade, 0, 100) && divisions.includes(fractal.division) && ["palette", "single"].includes(fractal.colorMode));
-  return config && config.version === 1 && background && Array.isArray(background.colors) && background.colors.length > 0 && background.colors.every((color) => /^#[\da-f]{6}$/i.test(color)) && divisions.includes(background.division) && ["solid", "strobe", "fade", "sparkle", "slime"].includes(background.effect) && validEffects && validFractal && Number.isInteger(config.tempo) && config.tempo >= 40 && config.tempo <= 240 && ["ice", "ember", "moss", "violet"].includes(config.palette) && ranges.every((key) => Number.isInteger(config[key]) && config[key] >= 0 && config[key] <= 100);
 }
 
 function removePidFile() {
@@ -63,7 +52,7 @@ const server = createServer(async (request, response) => {
       if (request.method === "GET") return send(response, 200, await readFile(configPath, "utf8"), "application/json; charset=utf-8");
       if (request.method === "PUT") {
         const config = JSON.parse(await readBody(request));
-        if (!validConfig(config)) return send(response, 400, "Invalid config.");
+        if (!validateConfig(config)) return send(response, 400, "Invalid config.");
         await copyFile(configPath, `${configPath}.bak`);
         await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
         return send(response, 200, JSON.stringify(config), "application/json; charset=utf-8");

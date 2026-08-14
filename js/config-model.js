@@ -43,6 +43,18 @@ export const FRACTAL_RANGE_SPECS = Object.freeze([
   ["symmetry", 3, 16, ""], ["recursion", 1, 5, ""], ["rotation", -100, 100, " deg/s"], ["pulse", 0, 100, "%"], ["distortion", 0, 100, "%"], ["centerX", 0, 100, "%"], ["centerY", 0, 100, "%"], ["opacity", 0, 100, "%"], ["trail", 0, 95, "%"], ["crossfade", 0, 100, "%"]
 ]);
 
+export const CONFIG_SCHEMA = Object.freeze({
+  tempo: [40, 240],
+  legacyRanges: Object.freeze({ density: [0, 100], motion: [0, 100], glow: [0, 100] }),
+  palettes: Object.freeze(["ice", "ember", "moss", "violet"]),
+  backgroundEffects: Object.freeze(["solid", ...Object.keys(BACKGROUND_EFFECT_CONTROL_SPECS)]),
+  fractal: Object.freeze({
+    styles: Object.freeze(["ink", "shards", "spray", "liquid"]),
+    blends: Object.freeze(["normal", "screen", "lighter", "multiply", "difference"]),
+    colorModes: Object.freeze(["palette", "single"])
+  })
+});
+
 export const DEFAULTS = Object.freeze({
   version: 1,
   background: {
@@ -79,4 +91,45 @@ export function normalizeSettings(loaded) {
   next.background.colors = Array.isArray(next.background.colors) && next.background.colors.length ? next.background.colors : [DEFAULTS.background.colors[0]];
   next.fractal = Object.assign({}, DEFAULTS.fractal, next.fractal);
   return next;
+}
+
+function isIntegerInRange(value, min, max) {
+  return Number.isInteger(value) && value >= min && value <= max;
+}
+
+function matchesRangeSpecs(values, specs) {
+  return specs.every((spec) => {
+    const [key, labelOrMin, minOrMax, maxOrSuffix] = spec;
+    const [min, max] = typeof labelOrMin === "string" ? [minOrMax, maxOrSuffix] : [labelOrMin, minOrMax];
+    return isIntegerInRange(values?.[key], min, max);
+  });
+}
+
+export function validateConfig(config) {
+  const background = config?.background;
+  const effects = background?.effectSettings;
+  const fractal = config?.fractal;
+  const validBackground = background
+    && Array.isArray(background.colors)
+    && background.colors.length > 0
+    && background.colors.every((color) => /^#[\da-f]{6}$/i.test(color))
+    && Object.hasOwn(BEAT_DIVISIONS, background.division)
+    && CONFIG_SCHEMA.backgroundEffects.includes(background.effect)
+    && Object.entries(BACKGROUND_EFFECT_CONTROL_SPECS).every(([effect, specs]) => matchesRangeSpecs(effects?.[effect], specs))
+    && effects.sparkle.maxSize >= effects.sparkle.minSize;
+  const validFractal = fractal === undefined || (
+    typeof fractal.enabled === "boolean"
+    && CONFIG_SCHEMA.fractal.styles.includes(fractal.style)
+    && matchesRangeSpecs(fractal, FRACTAL_RANGE_SPECS)
+    && CONFIG_SCHEMA.fractal.blends.includes(fractal.blend)
+    && Object.hasOwn(BEAT_DIVISIONS, fractal.division)
+    && CONFIG_SCHEMA.fractal.colorModes.includes(fractal.colorMode)
+  );
+  return config
+    && config.version === DEFAULTS.version
+    && validBackground
+    && validFractal
+    && isIntegerInRange(config.tempo, ...CONFIG_SCHEMA.tempo)
+    && CONFIG_SCHEMA.palettes.includes(config.palette)
+    && Object.entries(CONFIG_SCHEMA.legacyRanges).every(([key, range]) => isIntegerInRange(config[key], ...range));
 }
