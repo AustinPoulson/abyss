@@ -1,5 +1,6 @@
 import { BACKGROUND_EFFECT_CONTROL_SPECS, BEAT_DIVISIONS, cloneSettings, COLOR_PRESETS, DEFAULTS, normalizeSettings } from "./config-model.js";
 import { initControls as initSharedControls } from "./controls-ui.js";
+import { startBackground } from "./background.js";
 
 (function () {
   "use strict";
@@ -16,7 +17,7 @@ import { initControls as initSharedControls } from "./controls-ui.js";
 
   loadSettings().then((loaded) => {
     settings = loaded;
-    if (document.body.classList.contains("art-page")) { startStrobe(); startFractalLayer(); }
+    if (document.body.classList.contains("art-page")) { startBackground(settings); startFractalLayer(); }
     if (document.querySelector(".controls-page")) {
       initSharedControls({ settings, onChange: saveSettings });
       document.getElementById("reset")?.addEventListener("click", () => { settings = cloneSettings(defaults); saveSettings(); location.reload(); });
