@@ -1,14 +1,7 @@
 {
   "version": 1,
   "background": {
-    "colors": [
-      "#12002f",
-      "#ff006e",
-      "#fb5607",
-      "#ffbe0b",
-      "#8338ec",
-      "#3a86ff"
-    ],
+    "colors": ["#090014", "#2d006b", "#8a00ff", "#ff00c8", "#00e5ff"],
     "division": "1/4",
     "effect": "sparkle",
     "effectSettings": {

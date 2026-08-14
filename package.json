@@ -4,6 +4,11 @@
   "type": "module",
   "scripts": {
     "controls": "node tools/control-server.mjs",
-    "controls:stop": "node tools/stop-controls.mjs"
+    "controls:stop": "node tools/stop-controls.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.5.3"
   }
 }
