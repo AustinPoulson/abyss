@@ -10,7 +10,7 @@
       "#3a86ff"
     ],
     "division": "1/4",
-    "effect": "sparkle",
+    "effect": "solid",
     "effectSettings": {
       "strobe": {
         "randomness": 0
@@ -28,7 +28,7 @@
         "fadeIn": 100
       },
       "slime": {
-        "speed": 200,
+        "speed": 40,
         "dripDepth": 240,
         "complexity": 10
       }
@@ -38,13 +38,13 @@
     "enabled": true,
     "style": "shards",
     "symmetry": 16,
-    "recursion": 3,
-    "rotation": 0,
-    "pulse": 2,
+    "recursion": 2,
+    "rotation": 1,
+    "pulse": 0,
     "distortion": 100,
     "centerX": 50,
     "centerY": 50,
-    "opacity": 72,
+    "opacity": 95,
     "blend": "multiply",
     "trail": 0,
     "crossfade": 100,

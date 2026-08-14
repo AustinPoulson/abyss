@@ -187,17 +187,25 @@
       document.querySelectorAll("[data-fractal-division]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.fractalDivision === settings.fractal.division)));
       document.querySelectorAll("[data-fractal-range]").forEach((input) => { input.value = settings.fractal[input.dataset.fractalRange]; input.nextElementSibling.textContent = `${input.value}${input.dataset.suffix || ""}`; });
     }
+    const colorPreview = document.querySelector(".color-picker-preview");
+    const renderColorPreview = () => {
+      if (!colorPreview) return;
+      colorPreview.innerHTML = "";
+      colorPreview.setAttribute("aria-label", `Current background colors: ${settings.background.colors.join(", ")}`);
+      settings.background.colors.forEach((color) => { const dot = document.createElement("span"); dot.className = "color-picker-dot"; dot.style.backgroundColor = color; dot.setAttribute("aria-hidden", "true"); colorPreview.append(dot); });
+    };
     const renderColors = () => {
       if (!colorList) return;
       colorList.innerHTML = "";
       settings.background.colors.forEach((color, index) => {
         const row = document.createElement("div"); row.className = "color-row";
         row.innerHTML = `<input type="color" value="${color}" aria-label="Background color ${index + 1}"><output>${color.toUpperCase()}</output><div class="color-order"><button type="button" class="move-color" data-direction="up" aria-label="Move background color ${index + 1} up" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" class="move-color" data-direction="down" aria-label="Move background color ${index + 1} down" ${index === settings.background.colors.length - 1 ? "disabled" : ""}>↓</button></div><button type="button" class="remove-color" aria-label="Remove background color ${index + 1}">×</button>`;
-        row.querySelector("input").addEventListener("input", (event) => { settings.background.colors[index] = event.target.value; row.querySelector("output").textContent = event.target.value.toUpperCase(); saveSettings(); });
+        row.querySelector("input").addEventListener("input", (event) => { settings.background.colors[index] = event.target.value; row.querySelector("output").textContent = event.target.value.toUpperCase(); renderColorPreview(); saveSettings(); });
         row.querySelector(".remove-color").addEventListener("click", () => { if (settings.background.colors.length === 1) return; settings.background.colors.splice(index, 1); renderColors(); saveSettings(); });
         row.querySelectorAll(".move-color").forEach((button) => button.addEventListener("click", () => { const nextIndex = button.dataset.direction === "up" ? index - 1 : index + 1; if (nextIndex < 0 || nextIndex >= settings.background.colors.length) return; [settings.background.colors[index], settings.background.colors[nextIndex]] = [settings.background.colors[nextIndex], settings.background.colors[index]]; renderColors(); saveSettings(); }));
         colorList.append(row);
       });
+      renderColorPreview();
     };
     presets.forEach(([name, colors], index) => { const button = document.createElement("button"); button.type = "button"; button.className = "preset-button"; button.dataset.preset = index; button.style.background = `linear-gradient(135deg, ${colors.join(", ")})`; button.innerHTML = `<span>${String(index + 1).padStart(2, "0")}</span><b>${name}</b>`; button.addEventListener("click", () => { settings.background.colors = [...colors]; renderColors(); saveSettings(); }); presetList.append(button); });
     renderColors();

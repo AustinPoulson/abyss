@@ -58,6 +58,15 @@ button, input { font: inherit; }
 input[type="color"] { width: 4.2rem; height: 2.7rem; padding: .25rem; border: 1px solid var(--line); background: transparent; cursor: pointer; }
 .color-control output { color: var(--muted); font-size: .75rem; letter-spacing: .08em; }
 .color-list { display: grid; gap: .65rem; }
+.color-picker-panel { margin-bottom: 1.5rem; border: 1px solid var(--line); }
+.color-picker-panel summary { display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center; padding: .8rem 1rem; color: var(--muted); cursor: pointer; font-size: .72rem; letter-spacing: .15em; text-transform: uppercase; list-style: none; }
+.color-picker-panel summary::-webkit-details-marker { display: none; }
+.color-picker-panel summary::after { content: "+"; color: var(--accent); font-size: 1rem; }
+.color-picker-panel[open] summary { color: var(--ink); border-bottom: 1px solid var(--line); }
+.color-picker-panel[open] summary::after { content: "−"; }
+.color-picker-preview { display: flex; justify-content: flex-end; gap: .3rem; min-width: 0; overflow: hidden; }
+.color-picker-dot { flex: 0 0 auto; width: .72rem; height: .72rem; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; box-shadow: 0 0 .45rem rgba(255,255,255,.12); }
+.color-picker-content { padding: 1rem; }
 .preset-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; max-height: 22rem; overflow-y: auto; padding: .15rem; }
 .preset-button { min-height: 4.5rem; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; border: 1px solid var(--line); color: var(--ink); padding: .55rem; cursor: pointer; text-align: left; text-shadow: 0 1px 1px rgba(0,0,0,.55); }
 .preset-button:hover, .preset-button:focus-visible { border-color: var(--accent); transform: translateY(-1px); }
