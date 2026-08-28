@@ -1,7 +1,13 @@
 {
   "version": 1,
   "background": {
-    "colors": ["#090014", "#2d006b", "#8a00ff", "#ff00c8", "#00e5ff"],
+    "colors": [
+      "#090014",
+      "#2d006b",
+      "#8a00ff",
+      "#ff00c8",
+      "#00e5ff"
+    ],
     "division": "1/4",
     "effect": "sparkle",
     "effectSettings": {
@@ -38,7 +44,7 @@
     "centerX": 50,
     "centerY": 50,
     "opacity": 95,
-    "blend": "multiply",
+    "blend": "lighter",
     "trail": 0,
     "crossfade": 100,
     "division": "1/1",
