@@ -33,11 +33,56 @@ import { startBackground } from './background.js';
     localStorage.setItem('abyss-settings', JSON.stringify(settings));
   }
 
+  function keepScreenAwake() {
+    if (!('wakeLock' in navigator)) return;
+
+    let sentinel = null;
+    let requesting = false;
+
+    async function release() {
+      if (!sentinel) return;
+      const lock = sentinel;
+      sentinel = null;
+      try {
+        await lock.release();
+      } catch (_) {
+        // The browser may already have released the lock while the page was hidden.
+      }
+    }
+
+    async function request() {
+      if (document.hidden || sentinel || requesting) return;
+      requesting = true;
+      try {
+        const lock = await navigator.wakeLock.request('screen');
+        if (document.hidden) {
+          await lock.release();
+          return;
+        }
+        sentinel = lock;
+        lock.addEventListener('release', () => {
+          if (sentinel === lock) sentinel = null;
+        });
+      } catch (_) {
+        // Wake Lock is optional and can be declined by the browser or device.
+      } finally {
+        requesting = false;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) release();
+      else request();
+    });
+    request();
+  }
+
   loadSettings().then((loaded) => {
     settings = loaded;
     if (document.body.classList.contains('art-page')) {
       startBackground(settings);
       startFractalLayer();
+      keepScreenAwake();
     }
     if (document.querySelector('.controls-page')) {
       initSharedControls({ settings, onChange: saveSettings });
