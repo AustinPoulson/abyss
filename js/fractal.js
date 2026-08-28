@@ -82,11 +82,14 @@
     return colors[(index + step) % colors.length];
   }
 
-  function traceWedge(context, radius, halfAngle) {
+  function traceWedge(context, radius, halfAngle, padding = 0) {
     context.beginPath();
     context.moveTo(0, 0);
-    context.lineTo(Math.cos(-halfAngle) * radius, Math.sin(-halfAngle) * radius);
-    context.arc(0, 0, radius, -halfAngle, halfAngle);
+    context.lineTo(
+      Math.cos(-halfAngle - padding) * radius,
+      Math.sin(-halfAngle - padding) * radius,
+    );
+    context.arc(0, 0, radius, -halfAngle - padding, halfAngle + padding);
     context.closePath();
   }
 
@@ -283,7 +286,7 @@
       sourceContext.save();
       sourceContext.translate(center, center);
       sourceContext.scale(sourceScale, sourceScale);
-      traceWedge(sourceContext, sourceRadius, halfAngle);
+      traceWedge(sourceContext, sourceRadius * 1.01, halfAngle, 0.01);
       sourceContext.clip();
       const painter = { ink: drawInk, shards: drawShards, spray: drawSpray, liquid: drawLiquid }[
         settings.style
